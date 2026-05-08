@@ -25,6 +25,38 @@
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
+what this project can do
+
+As a user
+- You can change language between Thai and English
+- You can set dark or light theme
+- You can manage your account and profile
+
+As a reader
+- You can read a novel without being a member
+- You can comment & review a novel (only for member)
+- You can comment & review each novel episode
+- You can follow novels and get updates on new episodes
+- You can bookmark and continue reading later
+
+As a writer
+- You can create a novel
+- You can write each episode in a novel
+- You can use AI to help you write an awesome novel
+- You can add images to your novel
+- You can set the novel status (seen/unseen/draft)
+
+As an admin
+- You can manage users and roles
+- You can moderate reviews and comments
+- You can manage reported content
+
+Requested by users (nice-to-have)
+- Offline reading or cached recent episodes
+- Advanced reader settings (font, line height, reading width)
+- Cross-device reading progress sync
+- Anti-spoiler controls for comments
+
 ## Project setup
 
 ```bash

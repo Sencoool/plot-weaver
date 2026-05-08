@@ -11,3 +11,194 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum NovelStatus {
+  draft
+  unpublished
+  published
+}
+
+enum CommentTargetType {
+  novel
+  episode
+}
+
+enum MediaType {
+  cover
+  illustration
+}
+
+enum RoleName {
+  admin
+  writer
+  reader
+}
+
+model User {
+  id        String      @id @default(uuid())
+  email     String      @unique
+  name      String?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  profile   Profile?
+  roles     UserRole[]
+  novels    Novel[]
+  comments  Comment[]
+  reviews   Review[]
+  follows   Follow[]
+  bookmarks Bookmark[]
+  media     MediaAsset[]
+}
+
+model Profile {
+  id          String   @id @default(uuid())
+  displayName String?
+  avatarUrl   String?
+  bio         String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model Role {
+  id        String   @id @default(uuid())
+  name      RoleName @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users     UserRole[]
+}
+
+model UserRole {
+  id        String   @id @default(uuid())
+  userId    String
+  roleId    String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  role      Role     @relation(fields: [roleId], references: [id])
+
+  @@unique([userId, roleId])
+}
+
+model Novel {
+  id          String      @id @default(uuid())
+  title       String
+  summary     String?     @db.Text
+  status      NovelStatus @default(draft)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  authorId    String
+  author      User        @relation(fields: [authorId], references: [id])
+  episodes    Episode[]
+  reviews     Review[]
+  follows     Follow[]
+  tags        NovelTag[]
+  media       MediaAsset[]
+}
+
+model Episode {
+  id          String   @id @default(uuid())
+  novelId     String
+  title       String
+  content     String   @db.Text
+  order       Int
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  novel       Novel    @relation(fields: [novelId], references: [id])
+  bookmarks   Bookmark[]
+
+  @@unique([novelId, order])
+}
+
+model Comment {
+  id         String            @id @default(uuid())
+  userId     String
+  targetType CommentTargetType
+  targetId   String
+  content    String            @db.Text
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  user       User              @relation(fields: [userId], references: [id])
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  novelId   String
+  userId    String
+  rating    Int
+  content   String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  novel     Novel    @relation(fields: [novelId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([novelId, userId])
+}
+
+model Follow {
+  id        String   @id @default(uuid())
+  userId    String
+  novelId   String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+  novel     Novel    @relation(fields: [novelId], references: [id])
+
+  @@unique([userId, novelId])
+}
+
+model Bookmark {
+  id        String   @id @default(uuid())
+  userId    String
+  episodeId String
+  position  Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id])
+  episode   Episode  @relation(fields: [episodeId], references: [id])
+
+  @@unique([userId, episodeId])
+}
+
+model Tag {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  novels    NovelTag[]
+}
+
+model NovelTag {
+  id        String   @id @default(uuid())
+  novelId   String
+  tagId     String
+  createdAt DateTime @default(now())
+
+  novel     Novel    @relation(fields: [novelId], references: [id])
+  tag       Tag      @relation(fields: [tagId], references: [id])
+
+  @@unique([novelId, tagId])
+}
+
+model MediaAsset {
+  id        String   @id @default(uuid())
+  ownerId   String
+  novelId   String?
+  type      MediaType
+  url       String
+  createdAt DateTime @default(now())
+
+  owner     User     @relation(fields: [ownerId], references: [id])
+  novel     Novel?   @relation(fields: [novelId], references: [id])
+}
