@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { StoryGenerationService } from './story-generation.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { RabbitMqService } from '../messaging/rabbitmq.service';
 
 const prismaMock = {
   storyGenerationRequest: {
@@ -9,6 +10,10 @@ const prismaMock = {
     findUnique: jest.fn(),
     update: jest.fn(),
   },
+};
+
+const rabbitMqMock = {
+  publishStoryGenerationEvent: jest.fn(),
 };
 
 describe('StoryGenerationService', () => {
@@ -22,6 +27,10 @@ describe('StoryGenerationService', () => {
           provide: PrismaService,
           useValue: prismaMock,
         },
+        {
+          provide: RabbitMqService,
+          useValue: rabbitMqMock,
+        },
       ],
     }).compile();
 
@@ -30,7 +39,14 @@ describe('StoryGenerationService', () => {
   });
 
   it('creates a story generation request', async () => {
-    prismaMock.storyGenerationRequest.create.mockResolvedValue({ id: 'req-1' });
+    prismaMock.storyGenerationRequest.create.mockResolvedValue({
+      id: 'req-1',
+      novelId: 'novel-1',
+      status: 'pending',
+      provider: 'gemini',
+      model: 'gemini-2.0-flash',
+      createdAt: new Date('2026-05-24T10:00:00.000Z'),
+    });
 
     const result = await service.create({
       novelId: 'novel-1',
@@ -54,7 +70,16 @@ describe('StoryGenerationService', () => {
         maxTokens: 300,
       },
     });
-    expect(result).toEqual({ id: 'req-1' });
+    expect(rabbitMqMock.publishStoryGenerationEvent).toHaveBeenCalledWith({
+      type: 'story-generation.created',
+      requestId: 'req-1',
+      novelId: 'novel-1',
+      status: 'pending',
+      provider: 'gemini',
+      model: 'gemini-2.0-flash',
+      createdAt: '2026-05-24T10:00:00.000Z',
+    });
+    expect(result).toMatchObject({ id: 'req-1' });
   });
 
   it('lists generation requests without status filter', async () => {
@@ -86,7 +111,16 @@ describe('StoryGenerationService', () => {
   });
 
   it('updates a story generation request', async () => {
-    prismaMock.storyGenerationRequest.update.mockResolvedValue({ id: 'req-3' });
+    prismaMock.storyGenerationRequest.update.mockResolvedValue({
+      id: 'req-3',
+      novelId: 'novel-1',
+      status: 'completed',
+      provider: 'gemini',
+      model: 'gemini-2.0-flash',
+      output: 'Final story output',
+      error: null,
+      updatedAt: new Date('2026-05-24T11:00:00.000Z'),
+    });
 
     const result = await service.update('req-3', {
       status: 'completed',
@@ -102,6 +136,17 @@ describe('StoryGenerationService', () => {
         externalJobId: undefined,
       },
     });
-    expect(result).toEqual({ id: 'req-3' });
+    expect(rabbitMqMock.publishStoryGenerationEvent).toHaveBeenCalledWith({
+      type: 'story-generation.updated',
+      requestId: 'req-3',
+      novelId: 'novel-1',
+      status: 'completed',
+      provider: 'gemini',
+      model: 'gemini-2.0-flash',
+      outputLength: 18,
+      error: undefined,
+      updatedAt: '2026-05-24T11:00:00.000Z',
+    });
+    expect(result).toMatchObject({ id: 'req-3' });
   });
 });

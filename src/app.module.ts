@@ -4,6 +4,7 @@ import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { RabbitMqModule } from './messaging/rabbitmq.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { StoryGenerationModule } from './story-generation/story-generation.module';
 import { UsersModule } from './users/users.module';
@@ -11,6 +12,7 @@ import { UsersModule } from './users/users.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    RabbitMqModule,
     PrismaModule,
     UsersModule,
     StoryGenerationModule,
