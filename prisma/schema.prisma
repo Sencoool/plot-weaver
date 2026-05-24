@@ -33,6 +33,20 @@ enum RoleName {
   reader
 }
 
+enum GenerationMode {
+  co_author
+  autopilot
+}
+
+enum GenerationStatus {
+  pending
+  queued
+  processing
+  completed
+  failed
+  canceled
+}
+
 model User {
   id        String      @id @default(uuid())
   email     String      @unique
@@ -99,6 +113,7 @@ model Novel {
   follows     Follow[]
   tags        NovelTag[]
   media       MediaAsset[]
+  generations StoryGenerationRequest[]
 }
 
 model Episode {
@@ -201,4 +216,25 @@ model MediaAsset {
 
   owner     User     @relation(fields: [ownerId], references: [id])
   novel     Novel?   @relation(fields: [novelId], references: [id])
+}
+
+model StoryGenerationRequest {
+  id            String            @id @default(uuid())
+  novelId       String?
+  prompt        String            @db.Text
+  mode          GenerationMode
+  status        GenerationStatus  @default(pending)
+  provider      String
+  model         String?
+  temperature   Float?
+  maxTokens     Int?
+  output        String?           @db.Text
+  error         String?           @db.Text
+  externalJobId String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  novel         Novel?            @relation(fields: [novelId], references: [id])
+
+  @@index([status, createdAt])
 }
