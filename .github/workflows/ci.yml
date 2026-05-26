@@ -8,33 +8,33 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-      POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      RABBITMQ_DEFAULT_USER: ${{ secrets.RABBITMQ_DEFAULT_USER }}
-      RABBITMQ_DEFAULT_PASS: ${{ secrets.RABBITMQ_DEFAULT_PASS }}
+      POSTGRES_USER: ci_user
+      POSTGRES_PASSWORD: ci_pass
+      POSTGRES_DB: ci_db
+      DATABASE_URL: postgresql://ci_user:ci_pass@localhost:5432/ci_db
+      RABBITMQ_DEFAULT_USER: ci_rabbit
+      RABBITMQ_DEFAULT_PASS: ci_rabbit_pass
       RABBITMQ_HOST: localhost
       RABBITMQ_PORT: 5672
     services:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          POSTGRES_USER: ci_user
+          POSTGRES_PASSWORD: ci_pass
+          POSTGRES_DB: ci_db
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U ${{ secrets.POSTGRES_USER }} -d ${{ secrets.POSTGRES_DB }}"
+          --health-cmd "pg_isready -U ci_user -d ci_db"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
       rabbitmq:
         image: rabbitmq:3.13-management-alpine
         env:
-          RABBITMQ_DEFAULT_USER: ${{ secrets.RABBITMQ_DEFAULT_USER }}
-          RABBITMQ_DEFAULT_PASS: ${{ secrets.RABBITMQ_DEFAULT_PASS }}
+          RABBITMQ_DEFAULT_USER: ci_rabbit
+          RABBITMQ_DEFAULT_PASS: ci_rabbit_pass
         ports:
           - 5672:5672
           - 15672:15672
